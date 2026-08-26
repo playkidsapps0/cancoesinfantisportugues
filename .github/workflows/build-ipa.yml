@@ -1,4 +1,4 @@
-name: Build TrollStore IPA (Lista de Áudios Locais e Controles)
+name: Build TrollStore IPA (Travado em Portrait)
 
 on:
   push:
@@ -40,16 +40,16 @@ jobs:
           mkdir -p Payload/${{ env.BIN_NAME }}.app
           mv "${{ env.BIN_NAME }}" "Payload/${{ env.BIN_NAME }}.app/${{ env.BIN_NAME }}"
           
-          # Ação de varredura automatizada de áudios .mp3 locales
+          # Busca e injeta todos os áudios locais no pacote
           echo "🎵 Procurando e embutindo arquivos de áudio .mp3 locais..."
           for audio in meu-projeto/*.mp3; do
             if [ -f "$audio" ]; then cp "$audio" "Payload/${{ env.BIN_NAME }}.app/"; fi
           done
 
-          # Ação de varredura automatizada de imagens de fundo .png locales
-          echo "🖼️ Embutindo imagens de fundo .png locais..."
-          for png in meu-projeto/*.png; do
-            if [ -f "$png" ]; then cp "$png" "Payload/${{ env.BIN_NAME }}.app/"; fi
+          # Procura e injeta todas as imagens de fundo .jpg locais
+          echo "🖼️ Embutindo imagens de fundo .jpg locais..."
+          for jpg in meu-projeto/*.jpg; do
+            if [ -f "$jpg" ]; then cp "$jpg" "Payload/${{ env.BIN_NAME }}.app/"; fi
           done
 
           # Copia os ícones e as telas de carregamento do app (.png)
@@ -57,19 +57,19 @@ jobs:
           cp "meu-projeto/AppIcon60x60@2x.png" "Payload/${{ env.BIN_NAME }}.app/"
           cp "meu-projeto/AppIcon76x76@2x~ipad.png" "Payload/${{ env.BIN_NAME }}.app/"
 
-          if [ -f "meu-projeto/splash-568h@2x.png" ]; then
-            cp "meu-projeto/splash-568h@2x.png" "Payload/${{ env.BIN_NAME }}.app/"
+          if [ -f "meu-projeto/Default-568h@2x.png" ]; then
+            cp "meu-projeto/Default-568h@2x.png" "Payload/${{ env.BIN_NAME }}.app/"
           fi
           
-          for launch in meu-projeto/splash*.png; do
-            if [ -f "$launch" ] && [ "$(basename "$launch")" != "splash-568h@2x.png" ]; then
+          for launch in meu-projeto/Default*.png; do
+            if [ -f "$launch" ] && [ "$(basename "$launch")" != "Default-568h@2x.png" ]; then
               cp "$launch" "Payload/${{ env.BIN_NAME }}.app/"
             fi
           done
 
       - name: Gerar e Injetar Info.plist Adaptado
         run: |
-          echo "📝 Criando arquivo de propriedades..."
+          echo "📝 Criando arquivo de propriedades travado em Portrait..."
           cat <<EOF > Payload/${{ env.BIN_NAME }}.app/Info.plist
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://apple.com">
@@ -100,7 +100,7 @@ jobs:
               </array>
               
               <key>UILaunchImageFile</key>
-              <string>splash</string>
+              <string>Default</string>
               
               <key>CFBundleIcons</key>
               <dict>
@@ -123,6 +123,17 @@ jobs:
                       </array>
                   </dict>
               </dict>
+
+              <!-- CORREÇÃO AQUI: Removidas orientações Landscape, travando em vertical pura -->
+              <key>UISupportedInterfaceOrientations</key>
+              <array>
+                  <string>UIInterfaceOrientationPortrait</string>
+              </array>
+              <key>UISupportedInterfaceOrientations~ipad</key>
+              <array>
+                  <string>UIInterfaceOrientationPortrait</string>
+              </array>
+          </dict>
           </plist>
           EOF
 
@@ -135,4 +146,3 @@ jobs:
         with:
           name: TrollStore-Final-IPA
           path: "*.ipa"
-
