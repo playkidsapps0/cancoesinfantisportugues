@@ -1,0 +1,150 @@
+name: Build TrollStore IPA (Lista de Áudios Locais e Controles)
+
+on:
+  push:
+    branches: [ "main" ]
+
+env:
+  PROJECT_NAME: "meu-projeto"
+  BIN_NAME: "infantis"
+  CUSTOM_BUNDLE_ID: "com.aquballa.infantis"
+  CUSTOM_DISPLAY_NAME: "Canções Infantis" 
+
+jobs:
+  build-trollstore:
+    name: Compilação Direta via Swift CLI
+    runs-on: macos-14
+
+    steps:
+      - name: Clonar Repositório
+        uses: actions/checkout@v4
+
+      - name: Selecionar Xcode do Sistema
+        run: |
+          sudo xcode-select -s /Applications/Xcode.app
+          xcodebuild -version
+
+      - name: Compilar Binário Swift para iOS ARM64
+        run: |
+          echo "🚀 Compilando os arquivos de código Swift diretamente..."
+          xcrun --sdk iphoneos swiftc \
+            -target arm64-apple-ios15.0 \
+            -o "${{ env.BIN_NAME }}" \
+            meu-projeto/App.swift \
+            meu-projeto/ContentView.swift
+          echo "✅ Binário compilado com sucesso!"
+
+      - name: Montar Estrutura do Aplicativo (.app) e Injetar Recursos Estáticos
+        run: |
+          echo "📦 Montando a estrutura interna do aplicativo iOS..."
+          mkdir -p Payload/${{ env.BIN_NAME }}.app
+          mv "${{ env.BIN_NAME }}" "Payload/${{ env.BIN_NAME }}.app/${{ env.BIN_NAME }}"
+          
+          # Ação de varredura automatizada de áudios .mp3 locales
+          echo "🎵 Procurando e embutindo arquivos de áudio .mp3 locais..."
+          for audio in meu-projeto/*.mp3; do
+            if [ -f "$audio" ]; then cp "$audio" "Payload/${{ env.BIN_NAME }}.app/"; fi
+          done
+
+          # Ação de varredura automatizada de imagens de fundo .png locales
+          echo "🖼️ Embutindo imagens de fundo .png locais..."
+          for png in meu-projeto/*.png; do
+            if [ -f "$png" ]; then cp "$png" "Payload/${{ env.BIN_NAME }}.app/"; fi
+          done
+
+          # Copia os ícones e as telas de carregamento do app (.png)
+          echo "🖼️ Copiando ícones e telas de carregamento..."
+          cp "meu-projeto/AppIcon60x60@2x.png" "Payload/${{ env.BIN_NAME }}.app/"
+          cp "meu-projeto/AppIcon76x76@2x~ipad.png" "Payload/${{ env.BIN_NAME }}.app/"
+
+          if [ -f "meu-projeto/splash-568h@2x.png" ]; then
+            cp "meu-projeto/splash-568h@2x.png" "Payload/${{ env.BIN_NAME }}.app/"
+          fi
+          
+          for launch in meu-projeto/splash*.png; do
+            if [ -f "$launch" ] && [ "$(basename "$launch")" != "splash-568h@2x.png" ]; then
+              cp "$launch" "Payload/${{ env.BIN_NAME }}.app/"
+            fi
+          done
+
+      - name: Gerar e Injetar Info.plist Adaptado
+        run: |
+          echo "📝 Criando arquivo de propriedades..."
+          cat <<EOF > Payload/${{ env.BIN_NAME }}.app/Info.plist
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://apple.com">
+          <plist version="1.0">
+          <dict>
+              <key>CFBundleIdentifier</key>
+              <string>${{ env.CUSTOM_BUNDLE_ID }}</string>
+              <key>CFBundleDisplayName</key>
+              <string>${{ env.CUSTOM_DISPLAY_NAME }}</string>
+              <key>CFBundleExecutable</key>
+              <string>${{ env.BIN_NAME }}</string>
+              <key>CFBundleName</key>
+              <string>${{ env.BIN_NAME }}</string>
+              <key>CFBundlePackageType</key>
+              <string>APPL</string>
+              <key>CFBundleShortVersionString</key>
+              <string>1.0</string>
+              <key>CFBundleVersion</key>
+              <string>1</string>
+              <key>MinimumOSVersion</key>
+              <string>15.0</string>
+              
+              <key>CFBundleDevelopmentRegion</key>
+              <string>pt</string>
+              <key>CFBundleLocalizations</key>
+              <array>
+                  <string>pt</string>
+              </array>
+              
+              <key>UILaunchImageFile</key>
+              <string>splash</string>
+              
+              <key>CFBundleIcons</key>
+              <dict>
+                  <key>CFBundlePrimaryIcon</key>
+                  <dict>
+                      <key>CFBundleIconFiles</key>
+                      <array>
+                          <string>AppIcon60x60</string>
+                      </array>
+                  </dict>
+              </dict>
+              
+              <key>CFBundleIcons~ipad</key>
+              <dict>
+                  <key>CFBundlePrimaryIcon</key>
+                  <dict>
+                      <key>CFBundleIconFiles</key>
+                      <array>
+                          <string>AppIcon76x76</string>
+                      </array>
+                  </dict>
+              </dict>
+
+              <key>UISupportedInterfaceOrientations</key>
+              <array>
+                  <string>UIInterfaceOrientationLandscapeLeft</string>
+                  <string>UIInterfaceOrientationLandscapeRight</string>
+              </array>
+              <key>UISupportedInterfaceOrientations~ipad</key>
+              <array>
+                  <string>UIInterfaceOrientationLandscapeLeft</string>
+                  <string>UIInterfaceOrientationLandscapeRight</string>
+              </array>
+          </dict>
+          </plist>
+          EOF
+
+      - name: Compactar em Arquivo .ipa para TrollStore
+        run: |
+          zip -r "${{ env.BIN_NAME }}.ipa" Payload
+
+      - name: Salvar Artefato IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: TrollStore-Final-IPA
+          path: "*.ipa"
+
