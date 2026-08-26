@@ -47,9 +47,9 @@ jobs:
           done
 
           # Procura e injeta todas as imagens de fundo .jpg locais
-          echo "🖼️ Embutindo imagens de fundo .jpg locais..."
-          for jpg in meu-projeto/*.jpg; do
-            if [ -f "$jpg" ]; then cp "$jpg" "Payload/${{ env.BIN_NAME }}.app/"; fi
+          echo "🖼️ Embutindo imagens de fundo .png locais..."
+          for jpg in meu-projeto/*.png; do
+            if [ -f "$png" ]; then cp "$png" "Payload/${{ env.BIN_NAME }}.app/"; fi
           done
 
           # Copia os ícones e as telas de carregamento do app (.png)
@@ -57,12 +57,12 @@ jobs:
           cp "meu-projeto/AppIcon60x60@2x.png" "Payload/${{ env.BIN_NAME }}.app/"
           cp "meu-projeto/AppIcon76x76@2x~ipad.png" "Payload/${{ env.BIN_NAME }}.app/"
 
-          if [ -f "meu-projeto/Default-568h@2x.png" ]; then
-            cp "meu-projeto/Default-568h@2x.png" "Payload/${{ env.BIN_NAME }}.app/"
+          if [ -f "meu-projeto/splash-568h@2x.png" ]; then
+            cp "meu-projeto/splash-568h@2x.png" "Payload/${{ env.BIN_NAME }}.app/"
           fi
           
-          for launch in meu-projeto/Default*.png; do
-            if [ -f "$launch" ] && [ "$(basename "$launch")" != "Default-568h@2x.png" ]; then
+          for launch in meu-projeto/splash*.png; do
+            if [ -f "$launch" ] && [ "$(basename "$launch")" != "splash-568h@2x.png" ]; then
               cp "$launch" "Payload/${{ env.BIN_NAME }}.app/"
             fi
           done
@@ -100,7 +100,7 @@ jobs:
               </array>
               
               <key>UILaunchImageFile</key>
-              <string>Default</string>
+              <string>splash</string>
               
               <key>CFBundleIcons</key>
               <dict>
