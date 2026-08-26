@@ -46,7 +46,7 @@ jobs:
             if [ -f "$audio" ]; then cp "$audio" "Payload/${{ env.BIN_NAME }}.app/"; fi
           done
 
-          # Procura e injeta todas as imagens de fundo .jpg locais
+          # Procura e injeta todas as imagens de fundo .png locais
           echo "🖼️ Embutindo imagens de fundo .png locais..."
           for jpg in meu-projeto/*.png; do
             if [ -f "$png" ]; then cp "$png" "Payload/${{ env.BIN_NAME }}.app/"; fi
